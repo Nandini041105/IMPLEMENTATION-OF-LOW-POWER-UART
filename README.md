@@ -84,3 +84,84 @@ flowchart TD
 
     BAUD_GEN -->|Baud Tick| Transmitter
     BAUD_GEN -->|16x Oversample Tick| Receiver
+
+
+Hardware & EDA Tool Specifications
+Parameter	Specification
+Target Device	Xilinx Artix-7 FPGA (xc7a35tcpg236-1 / Basys 3)
+EDA Tool	Xilinx Vivado Design Suite (v2020.2 or later)
+HDL Standard	Verilog-2001
+System Clock	100 MHz
+Default Baud Rate	9600 bps / 115200 bps
+Data Frame	1 Start Bit, 8 Data Bits, 1 Stop Bit, No Parity (8-N-1)
+
+🔌 Module Descriptions & Pin Mapping
+Port Name	Direction	Artix-7 Pin	Description
+clk	Input	W5	100 MHz Master System Clock
+reset	Input	V17	Active-High Asynchronous System Reset
+rx	Input	B18	Serial Data Input from External Host/PC
+tx	Output	A18	Serial Data Output to External Host/PC
+tx_start	Input	U18	Pushbutton trigger to initiate transmission
+tx_data[7:0]	Input	V16 to V17	8-bit input switches for data payload
+rx_data[7:0]	Output	U16 to V14	8 onboard LEDs reflecting received byte
+rx_done	Output	L1	Interrupt LED indicating valid byte received
+🔄 Finite State Machine (FSM) Design
+Transmitter (TX) State Flow:
+IDLE: Line stays HIGH (1'b1). Waits for tx_start.
+START: Drives line LOW (1'b0) for 1 baud period.
+DATA: Shifts out 8 data bits (LSB first) sequentially on each baud pulse.
+STOP: Drives line HIGH (1'b1) for 1 baud period, then returns to IDLE.
+📂 Repository Structure
+
+
+├── rtl/
+│   ├── uart_top.v            # Top-level integration module
+│   ├── baud_rate_gen.v       # Modulo divider baud clock generator
+│   ├── uart_tx.v             # Serializer & TX FSM
+│   └── uart_rx.v             # Deserializer with 16x oversampler
+├── tb/
+│   ├── uart_top_tb.v         # Self-checking testbench
+│   └── baud_rate_gen_tb.v    # Clock division testbench
+├── constraints/
+│   └── basys3_artix7.xdc     # Vivado XDC pin constraint file
+├── sim/
+│   └── waveforms/            # Waveform capture captures (.png)
+└── docs/
+    └── synthesis_report.pdf  # Power, timing, and resource utilization reports
+📈 Simulation, Synthesis & Power Results
+Functional Verification: Verified across corner cases (back-to-back frames, clock drift).
+Resource Utilization (Artix-7):
+Slice LUTs: < 1% utilization
+Slice Registers (FFs): < 1% utilization
+Global Clock Buffers (BUFG): 1
+Power Analysis: Total On-Chip Power measured at < 0.085 W using the Vivado Report Power feature.
+🚀 Step-by-Step Simulation & Execution
+Clone the repository:
+bash
+
+
+git clone https://github.com/YOUR_USERNAME/low-power-uart-artix7.git
+Open Xilinx Vivado:
+Create a New Project 
+→
+→ Choose RTL Project.
+Select part: xc7a35tcpg236-1 (or your Artix-7 board part).
+Add Sources:
+Add all files from /rtl as Design Sources.
+Add /tb/uart_top_tb.v as Simulation Sources.
+Add /constraints/basys3_artix7.xdc as Constraints.
+Run Simulation:
+Click Run Behavioral Simulation.
+Observe UART TX output serialized data matching the test stimulus.
+Synthesis & Bitstream:
+Click Run Synthesis 
+→
+→ Run Implementation 
+→
+→ Generate Bitstream.
+📚 References & Citations
+Xilinx 7 Series FPGAs Configurable Logic Block User Guide (UG474).
+Pong P. Chu, FPGA Prototyping by Verilog Examples: Xilinx Spartan-3 Version.
+
+
+
